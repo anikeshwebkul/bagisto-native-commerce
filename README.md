@@ -1,7 +1,32 @@
+<p align="center">
+  <a href="https://bagisto.com/en/headless-ecommerce/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/bagisto/temp-media/0b0984778fae92633f57e625c5494ead1fe320c3/dark-logo-P5H7MBtx.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://bagisto.com/wp-content/themes/bagisto/images/logo.png">
+      <img src="https://bagisto.com/wp-content/themes/bagisto/images/logo.png" alt="Bagisto logo">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+    <a href="https://bagisto.com/en/headless-ecommerce/">Website</a> | <a href="https://bagisto.com/en/bagisto-headless-ecommerce-installation-guide/">Documentation</a> | <a href="https://forums.bagisto.com/">Forums</a> | <a href="https://www.facebook.com/groups/bagisto/">Community</a>
+</p>
+
+<p align="center">
+    <a href="https://twitter.com/intent/follow?screen_name=bagistoshop"><img src="https://img.shields.io/twitter/follow/bagistoshop?style=social"></a>
+    <a href="https://www.youtube.com/channel/UCbrfqnhyiDv-bb9QuZtonYQ"><img src="https://img.shields.io/youtube/channel/subscribers/UCbrfqnhyiDv-bb9QuZtonYQ?style=social"></a>
+</p>
+
+<p align="center">
+    <a href="https://packagist.org/packages/bagisto/bagisto"><img src="https://poser.pugx.org/bagisto/bagisto/license.svg" alt="License"></a>
+</p>
+
 #  Bagisto Next.js Commerce
 
 A [**headless eCommerce framework**](https://bagisto.com/en/headless-ecommerce/) built with **Next.js** and powered by **Bagisto**, designed for modern scalability and flexibility.
 Through layered caching and optimized rendering strategies, it consistently achieves a **100/100 Core Web Vitals score**, delivering lightning-fast performance and seamless shopping experiences.
+
+Check the [Documentation](https://bagisto.com/en/bagisto-headless-ecommerce-installation-guide/) to quickly set up your Headless eCommerce store.
 
 **Bagisto Version:** v2.3.0
 
@@ -41,7 +66,13 @@ Before you begin, ensure you have the following installed:
 
     After installing Bagisto, install the [Bagisto Headless Extension](https://github.com/bagisto/headless-ecommerce/) to expose the required APIs for your frontend.
 
-3) Configure `.env.local` in the Next.js Project
+3) Get your storefront up and running in one command:
+   
+   ```bash
+   npx -y @bagisto-headless/create your-storefront
+   ```
+   
+4) Configure `.env.local` in the Next.js Project
 
    In your Next.js frontend project, create or update your `.env.local` file with the following variables:
 
@@ -81,49 +112,7 @@ Download your environment variables:
 ```bash
 vercel env pull
 ```
-4) Update next.config.js with Required Runtime Config
 
-   This project customizes the Next.js configuration to optimize performance, images, and caching.
-```env
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  allowedDevOrigins: ["local-origin.dev", "*.local-origin.dev"],
-  images: {
-    unoptimized: false,
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: process.env.IMAGE_DOMAIN,
-      },
-    ],
-  },
-  env: {
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    BAGISTO_STORE_DOMAIN: process.env.BAGISTO_STORE_DOMAIN,
-    REVALIDATION_DURATION: process.env.REVALIDATION_DURATION,
-    SITE_NAME: process.env.SITE_NAME,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  async headers() {
-    return [
-      {
-        source: "/",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, s-maxage=3600, stale-while-revalidate=8640",
-          },
-        ],
-      },
-    ];
-  },
-};
-
-module.exports = nextConfig;
-
-```
 ---
 
 **Run the development server:**
