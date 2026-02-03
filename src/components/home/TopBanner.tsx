@@ -52,13 +52,16 @@ export default function TopBanner() {
                                 ✨
                             </span>
                             <span>
-                                Introducing Bloom: Build Bagisto stores•{" "}
-                                <button
-                                    onClick={() => { }}
+                                New Release: Bagisto Headless – APIs first. Frontend freedom →
+                                {" "}
+                                <a
+                                    href="https://headless-doc.bagisto.com/bagisto-headless-ecommerce/getting-started/quick-start-guide"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="font-semibold cursor-pointer underline underline-offset-4 hover:text-neutral-300 dark:hover:text-neutral-600 transition-colors"
                                 >
-                                    Request early access
-                                </button>
+                                    Explore Now
+                                </a>
                             </span>
                         </div>
                         <button
