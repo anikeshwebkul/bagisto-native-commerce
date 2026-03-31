@@ -30,8 +30,10 @@ const BottomNavbar = memo(function BottomNavbar({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    requestAnimationFrame(() => {
+      setMounted(true);
+      setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    });
   }, []);
 
   const itemBase =
@@ -40,7 +42,9 @@ const BottomNavbar = memo(function BottomNavbar({
   const getIconWrapperClass = (tab: Tab) =>
     clsx(
       "flex items-center justify-center rounded-full transition-all duration-300 px-6 py-1",
-      activeTab === tab ? "bg-selected-color dark:bg-selected-color-dark" : "bg-transparent"
+      activeTab === tab
+        ? "bg-selected-color dark:bg-selected-bg-bottom-dark dark:text-selected-bottom-dark"
+        : "bg-transparent text-neutral-900 dark:text-neutral-400"
     );
 
   return (
@@ -77,29 +81,24 @@ const BottomNavbar = memo(function BottomNavbar({
           </button>
 
           {/* Cart */}
-          <div
-            className={`${mounted && !isTurboNativeUserAgentState ? 'flex items-center' : 'hidden'
-              }`}
+          <Cart
+            className={itemBase}
+            onOpen={() => setActiveTab("cart")}
+            onClose={() => setActiveTab(null)}
+            isOpen={activeTab === "cart"}
+            isBottomNavbar={true}
           >
-            <Cart
-              className={itemBase}
-              isBottomNavbar={true}
-              onClick={() => setActiveTab("cart")}
-              onClose={() => setActiveTab(null)}
-              isOpen={activeTab === "cart"}
-            >
-              <div className={getIconWrapperClass("cart")}>
-                <OpenCart quantity={cartDetail?.cart?.itemsQty} />
-              </div>
-              <span>Cart</span>
-            </Cart>
-          </div>
+            <div className={getIconWrapperClass("cart")}>
+              <OpenCart quantity={cartDetail?.cart?.itemsQty} />
+            </div>
+            <span>Cart</span>
+          </Cart>
 
           {/* Account */}
           <Suspense fallback={<IconSkeleton />}>
             <UserAccount
               className={itemBase}
-              onClick={() => setActiveTab("account")}
+              onOpen={() => setActiveTab("account")}
               onClose={() => setActiveTab(null)}
               isOpen={activeTab === "account"}
             >

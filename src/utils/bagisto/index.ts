@@ -2,17 +2,16 @@ import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  BagistoCollectionProductsOperation,
   BagistoCreateUserOperation,
   BagistoProductInfo,
+  BagistoSession,
   BagistoUser,
   ImageInfo,
-  InputData,
-  ProductDetailsInfo,
 } from "@/types/types";
 import {
   BAGISTO_SESSION,
   HIDDEN_PRODUCT_TAG,
+  STOREFRONT_KEY,
 } from "../constants";
 import { getServerSession } from "next-auth";
 import {
@@ -22,16 +21,30 @@ import {
 } from "@/graphql/customer/mutations";
 import { DocumentNode } from "graphql";
 import { GRAPHQL_URL } from "@/utils/constants";
-import { GET_FOOTER, PAGE_BY_URL_KEY } from "@/graphql";
+import {
+  GET_FOOTER,
+  GET_THEME_CUSTOMIZATION,
+  PAGE_BY_URL_KEY,
+} from "@/graphql";
 import { SUBSCRIBE_TO_NEWSLETTER } from "@/graphql/theme/mutations";
-import { getHomeProductQuery } from "./product-collection";
+import { cachedGraphQLRequest } from "@/utils/hooks/useCache";
 import { authOptions } from "@utils/auth";
 import { RegisterInputs } from "@components/customer/RegistrationForm";
-import { GetFooterResponse, GetFooterVariables, ThemeCustomizationResult } from "@/types/theme/theme-customization";
+import {
+  GetFooterResponse,
+  ThemeCustomizationResult,
+  ThemeCustomizationResponse,
+  PageData,
+} from "@/types/theme/theme-customization";
+
 
 type ExtractVariables<T> = T extends { variables: object }
   ? T["variables"]
   : never;
+
+interface PageByUrlKeyResponse {
+  pageByUrlKeypages?: PageData[];
+}
 
 export async function bagistoFetch<T>({
   cache = "force-cache",
@@ -40,6 +53,7 @@ export async function bagistoFetch<T>({
   tags,
   variables,
   isCookies = true,
+  guestToken,
   revalidate = 60,
 }: {
   cache?: RequestCache;
@@ -48,11 +62,12 @@ export async function bagistoFetch<T>({
   tags?: string[];
   variables?: ExtractVariables<T>;
   isCookies?: boolean;
+  guestToken?: string;
   revalidate?: number;
 }): Promise<{ status: number; body: T } | never> {
   try {
     const queryString =
-      typeof query === "string" ? query : query.loc?.source?.body ?? "";
+      typeof query === "string" ? query : (query.loc?.source?.body ?? "");
 
     let bagistoCartId = "";
     let accessToken: string | undefined = undefined;
@@ -60,17 +75,21 @@ export async function bagistoFetch<T>({
     if (isCookies) {
       const cookieStore = await cookies();
       bagistoCartId = cookieStore.get(BAGISTO_SESSION)?.value ?? "";
-      const sessions = await getServerSession(authOptions);
-      accessToken = (sessions as any)?.user?.accessToken;
-
+      const sessions = (await getServerSession(
+        authOptions,
+      )) as BagistoSession | null;
+      accessToken = sessions?.user?.accessToken;
     }
 
     const baseHeaders: Record<string, string> = {
       "Content-Type": "application/json",
+      "X-STOREFRONT-KEY": STOREFRONT_KEY,
     };
 
     if (accessToken) {
       baseHeaders.Authorization = `Bearer ${accessToken}`;
+    } else if (guestToken) {
+      baseHeaders.Authorization = `Bearer ${guestToken}`;
     }
 
     if (bagistoCartId) {
@@ -123,13 +142,14 @@ export async function bagistoFetchNoSession<T>({
   headers?: HeadersInit | Record<string, string>;
   cache?: RequestCache;
   isCookies?: boolean;
-  revalidate?: number,
+  revalidate?: number;
 }): Promise<{ status: number; body: T } | never> {
   try {
     const result = await fetch(GRAPHQL_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-STOREFRONT-KEY": STOREFRONT_KEY,
         "x-locale": "en",
         "x-currency": "USD",
         ...headers,
@@ -179,7 +199,7 @@ const reshapeImages = (images: Array<ImageInfo>, productTitle: string) => {
 
 const reshapeProduct = (
   product: BagistoProductInfo,
-  filterHiddenProducts: boolean = true
+  filterHiddenProducts: boolean = true,
 ) => {
   if (
     !product ||
@@ -214,7 +234,7 @@ export const reshapeProducts = (products: BagistoProductInfo[]) => {
 };
 
 export async function createUserToLogin(
-  input: RegisterInputs
+  input: RegisterInputs,
 ): Promise<BagistoUser> {
   try {
     const { passwordConfirmation, ...userInput } = input;
@@ -257,11 +277,6 @@ export async function logoutUser() {
       variables: { input: { token: string } };
     }>({
       query: CUSTOMER_LOGOUT,
-      variables: {
-        input: {
-          token,
-        },
-      },
       isCookies: true,
       revalidate: 3600,
     });
@@ -287,7 +302,7 @@ export async function logoutUser() {
 }
 
 export async function recoverUserLogin(
-  input: Record<string, unknown>
+  input: Record<string, unknown>,
 ): Promise<unknown> {
   try {
     return await bagistoFetch<{
@@ -306,8 +321,8 @@ export async function recoverUserLogin(
   }
 }
 
-export async function subsCribeUser(
-  input: Record<string, unknown>
+export async function subscribeUser(
+  input: Record<string, unknown>,
 ): Promise<unknown> {
   try {
     return await bagistoFetch<{
@@ -325,65 +340,20 @@ export async function subsCribeUser(
   }
 }
 
-export async function getCollectionHomeProducts({
-  filters,
-}: {
-  filters: InputData[];
-  tag: string;
-}): Promise<ProductDetailsInfo[]> {
-  try {
-    const res = await bagistoFetchNoSession<BagistoCollectionProductsOperation>(
-      {
-        query: getHomeProductQuery,
-        variables: { input: filters },
-        tags: ["products"],
-        isCookies: false,
-        revalidate: 86400,
-      }
-    );
-
-    if (
-      res.body &&
-      res.body.data &&
-      res.body.data.allProducts &&
-      Array.isArray(res.body.data.allProducts.data)
-    ) {
-      return reshapeProducts(res.body.data.allProducts.data);
-    }
-    return [];
-  } catch {
-    // Error handled silently
-  }
-  return [];
-}
-
 export async function getThemeCustomization(): Promise<ThemeCustomizationResult> {
   try {
-    const footerRes = await bagistoFetch<{
-      data: GetFooterResponse;
-      variables: GetFooterVariables
-    }>({
-      query: GET_FOOTER,
-      variables: { type: "footer_links" },
-      isCookies: false,
-      revalidate: 86400,
-    });
-
-    const servicesRes = await bagistoFetch<{
-      data: GetFooterResponse;
-      variables: GetFooterVariables;
-    }>({
-      query: GET_FOOTER,
-      variables: { type: "services_content" },
-      isCookies: false,
-      revalidate: 86400,
-    });
-
-
+    const [footerRes, servicesRes] = await Promise.all([
+      cachedGraphQLRequest<GetFooterResponse>("static", GET_FOOTER, {
+        type: "footer_links",
+      }),
+      cachedGraphQLRequest<GetFooterResponse>("static", GET_FOOTER, {
+        type: "services_content",
+      }),
+    ]);
 
     return {
-      footer_links: footerRes.body.data,
-      services_content: servicesRes.body.data,
+      footer_links: footerRes,
+      services_content: servicesRes,
     };
   } catch (err) {
     console.error("ThemeCustomization Error:", err);
@@ -429,20 +399,34 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
     status: 200,
     revalidated: true,
     topic,
-    now: Date.now()
+    now: Date.now(),
   });
 }
 
+export async function getHomePageData(): Promise<ThemeCustomizationResponse> {
+  const res = await bagistoFetch<{
+    data: ThemeCustomizationResponse;
+    variables: { first: number };
+  }>({
+    query: GET_THEME_CUSTOMIZATION,
+    variables: { first: 20 },
+    tags: ["theme-customization"],
+    revalidate: 60,
+  });
 
-export async function getPage(
-  input: { urlKey: string }
-): Promise<any> {
-  const res = await bagistoFetch<any>({
+  return res.body.data;
+}
+
+export async function getPage(input: { urlKey: string }): Promise<PageData[]> {
+  const res = await bagistoFetch<{
+    data: PageByUrlKeyResponse;
+    variables: { pageByUrlKey: string };
+  }>({
     query: PAGE_BY_URL_KEY,
     cache: "no-store",
     isCookies: false,
     variables: { pageByUrlKey: input.urlKey },
   });
 
-  return res.body.data?.pageByUrlKeypages;
+  return res.body.data?.pageByUrlKeypages || [];
 }

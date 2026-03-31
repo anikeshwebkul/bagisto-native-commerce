@@ -4,7 +4,7 @@ import { Price } from "@components/theme/ui/Price";
 import CartItemAccordion from "./CartItemAccordian";
 import { NOT_IMAGE } from "@utils/constants";
 import Link from "next/link";
-import { createUrl } from "@utils/helper";
+import { createUrl, safeParse } from "@utils/helper";
 type MerchandiseSearchParams = {
   [key: string]: string;
 };
@@ -31,7 +31,7 @@ export default function CheckoutCart({ cartItems, selectedShippingRate: _id }: {
                   `/product/${item?.node.productUrlKey}`,
                   new URLSearchParams(merchandiseSearchParams)
                 );
-                const baseImage = JSON.parse(item?.node?.baseImage);
+                const baseImage: any = safeParse(item?.node?.baseImage);
 
                 return (
                   <li key={i} className="flex w-full flex-col">

@@ -73,7 +73,7 @@ export default function LoginForm() {
       // Only merge cart if user had a guest cart before login
       if (userToken && guestCartId && guestCartToken) {
         try {
-          await mergeCart(userToken, parseInt(guestCartId, 10));
+          await mergeCart({ variables: { token: userToken, cartId: parseInt(guestCartId, 10) } });
           setCookie(GUEST_CART_TOKEN, userToken);
           setCookie(IS_GUEST, "false");
           await getCartDetail();
@@ -84,6 +84,7 @@ export default function LoginForm() {
         // User logged in without a guest cart, just set the token
         setCookie(GUEST_CART_TOKEN, userToken);
         setCookie(IS_GUEST, "false");
+        await getCartDetail();
       }
       setTimeout(() => {
         router.push("/");
@@ -98,13 +99,13 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="my-8 flex h-[80vh] w-full items-center w-full max-w-screen-2xl mx-auto px-4  xss:px-7.5 justify-between gap-4 lg:my-16 xl:my-28">
+    <div className="flex w-full items-center max-w-screen-2xl mx-auto px-4  xss:px-7.5 justify-between gap-4 lg:my-16 xl:my-28">
       <div className="flex w-full max-w-[583px] flex-col gap-y-4 lg:gap-y-12">
         <div className="font-outfit">
           <h2 className="py-1 text-2xl font-semibold sm:text-4xl">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-lg font-normal text-black/60 dark:text-neutral-300">
+          <p className="mt-2  text-base md:text-lg font-normal text-black/60 dark:text-neutral-400">
             If you have an account, sign in with your email address.
           </p>
         </div>
@@ -114,7 +115,7 @@ export default function LoginForm() {
           className="flex flex-col gap-y-4 lg:gap-y-12"
           onSubmit={handleSubmit(onSubmit)}
         >
-          <div className="flex flex-col gap-y-2.5 lg:gap-[18px]">
+          <div className="flex flex-col gap-y-2.5 lg:gap-4">
             <InputText
               {...register("username", {
                 required: "Email is required",
@@ -126,7 +127,7 @@ export default function LoginForm() {
               errorMsg={
                 errors.username?.message ? [errors.username.message] : undefined
               }
-              label="Email"
+              label="Enter Your Email Address"
               labelPlacement="outside"
               name="username"
               placeholder="Enter your email address"
@@ -152,7 +153,7 @@ export default function LoginForm() {
               errorMsg={
                 errors.password?.message ? [errors.password.message] : undefined
               }
-              label="Password"
+              label="Enter Password"
               labelPlacement="outside"
               name="password"
               placeholder="Enter your password"
@@ -178,7 +179,7 @@ export default function LoginForm() {
               title="Sign In"
               type="submit"
             />
-            <span className="font-outfit">
+            <span className="mx-auto font-outfit sm:mx-0">
               New customer?{" "}
               <Link
                 className="font-medium text-blue-600 hover:text-blue-500 underline"

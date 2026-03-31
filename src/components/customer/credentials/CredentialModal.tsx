@@ -1,8 +1,8 @@
 "use client";
 
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
-import { Drawer, DrawerContent, DrawerBody, DrawerHeader, DrawerFooter } from "@heroui/drawer";
 import { useDisclosure } from "@heroui/react";
+import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { usePathname, useRouter } from "next/navigation";
 import { useCustomToast } from '@/utils/hooks/useToast';
 import { useMediaQuery } from "@utils/hooks/useMediaQueryHook";
+import { useBodyScrollLock } from "@utils/hooks/useBodyScrollLock";
 import OpenAuth from "../OpenAuth";
 import { isObject } from '@/utils/type-guards';
 import { useGuestCartToken } from "@utils/hooks/useGuestCartToken";
@@ -19,48 +20,60 @@ import { logoutAction } from "@utils/actions";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearUser } from "@/store/slices/user-slice";
 import { clearCart } from "@/store/slices/cart-slice";
+import { EMAIL, removeFromLocalStorage } from "@/store/local-storage";
 import { useState, useEffect } from "react";
-import { isTurboNativeUserAgent } from "@bagisto-native/core";
+import { isTurboNativeUserAgent, triggerDynamicButtonModalDismissEvent } from "@bagisto-native/core";
+
 
 export default function CredentialModal({
   children,
   className,
-  onClick,
-  onClose: onCloseProp,
-  isOpen: isOpenProp,
+  onOpen,
+  onClose,
+  isOpen,
 }: {
   children?: React.ReactNode;
   className?: string;
-  onClick?: () => void;
+  onOpen?: () => void;
   onClose?: () => void;
   isOpen?: boolean;
 }) {
+  const {
+    isOpen: internalIsOpen,
+    onOpen: internalOnOpen,
+    onClose: internalOnClose,
+    onOpenChange: _internalOnOpenChange,
+  } = useDisclosure();
+
+  const isControlled = isOpen !== undefined;
+  const finalIsOpen = isControlled ? isOpen : internalIsOpen;
+  const finalOnOpen = isControlled ? onOpen : internalOnOpen;
+  const finalOnClose = isControlled ? onClose : internalOnClose;
+
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { showToast } = useCustomToast();
-  const { isOpen: internalIsOpen, onOpen, onOpenChange } = useDisclosure();
-  const isOpen = isOpenProp !== undefined ? isOpenProp : internalIsOpen;
-
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const { resetGuestToken } = useGuestCartToken();
+
   const [isTurboNativeUserAgentState, setIsTurboNativeUserAgentState] = useState(false);
 
   useEffect(() => {
-    setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    requestAnimationFrame(() => {
+      setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    });
   }, []);
 
-  const handleOpen = () => {
-    onOpen();
-    if (onClick) {
-      onClick();
-    }
-  };
+  useBodyScrollLock(finalIsOpen && !isDesktop);
 
-  const handleOpenChange = (open: boolean) => {
-    onOpenChange();
-    if (!open && onCloseProp) {
-      onCloseProp();
+  const finalOnOpenChange = (open: boolean) => {
+    if (isControlled) {
+      if (open) onOpen?.();
+      else onClose?.();
+    } else {
+      if (open) internalOnOpen();
+      else internalOnClose();
     }
   };
 
@@ -92,14 +105,20 @@ export default function CredentialModal({
       setTimeout(() => {
         router.push("/customer/login");
         router.refresh();
+
+        // Trigger Modal Dismiss Event (Hotwire native)
+        triggerDynamicButtonModalDismissEvent();
+        // Close the Modal
+        finalOnClose?.();
       }, 100);
+      removeFromLocalStorage(EMAIL)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Logout failed";
       showToast(message, "danger");
     }
   };
 
-  const innerContent = (onClose?: () => void) => (
+  const innerContent = (_onClose?: () => void) => (
     <div className={clsx("flex w-full flex-col rounded-md py-4", {
       "gap-y-6": !!session?.user || (!session?.user && isDesktop),
       "gap-y-10": !session?.user && !isDesktop,
@@ -107,27 +126,27 @@ export default function CredentialModal({
       {isObject(session?.user) ? (
         <>
           <header>
-            <div className={clsx("flex flex-col gap-3", !isDesktop && "items-center justify-center")}>
-              <div className={clsx("flex gap-3", !isDesktop ? "flex-col items-center" : "items-center")}>
+            <div className={clsx("flex flex-col gap-3", (!isDesktop || isTurboNativeUserAgentState) && "items-center justify-center")}>
+              <div className={clsx("flex gap-3", (!isDesktop || isTurboNativeUserAgentState) ? "flex-col items-center" : "items-center")}>
                 <Avatar
                   isBordered
                   showFallback
                   color="default"
-                  icon={<OpenAuth className={clsx(isDesktop ? "h-8" : "h-12 w-12")} />}
+                  icon={<OpenAuth className={clsx(isDesktop && !isTurboNativeUserAgentState ? "h-8" : "h-12 w-12")} />}
                   size={isDesktop ? "md" : "lg"}
-                  className={clsx(!isDesktop && "h-24 w-24 text-large")}
+                  className={clsx((!isDesktop || isTurboNativeUserAgentState) && "h-24 w-24 text-large")}
                 />
-                <div className={clsx("flex flex-col justify-center", !isDesktop ? "items-center gap-1" : "items-start")}>
-                  <h4 className={clsx("leading-none dark:text-white", isDesktop ? "font-semibold text-default-500 text-small" : "text-xl font-bold text-black")}>
+                <div className={clsx("flex flex-col justify-center", (!isDesktop || isTurboNativeUserAgentState) ? "items-center gap-1" : "items-start")}>
+                  <h4 className={clsx("leading-none dark:text-white", (!isDesktop || isTurboNativeUserAgentState) ? "font-semibold text-default-500 text-small" : "text-xl font-bold text-black")}>
                     {session?.user?.name}
                   </h4>
-                  <h5 className={clsx("tracking-tight dark:text-white", isDesktop ? "text-default-500 text-small" : "text-sm text-gray-500")}>
+                  <h5 className={clsx("tracking-tight dark:text-white", (!isDesktop || isTurboNativeUserAgentState) ? "text-default-500 text-small" : "text-sm text-gray-500")}>
                     {session?.user?.email}
                   </h5>
                 </div>
               </div>
 
-              <p className={clsx("text-default-500 dark:text-white", isDesktop ? "text-small pl-px" : "text-center mt-2")}>
+              <p className={clsx("text-default-500 dark:text-white", (!isDesktop || isTurboNativeUserAgentState) ? "text-small pl-px" : "text-center mt-2")}>
                 Manage Cart, Orders
                 <span aria-label="confetti" className="px-2" role="img">
                   🎉
@@ -142,7 +161,7 @@ export default function CredentialModal({
                 className={clsx(
                   "rounded-full bg-gray-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700",
                   isSubmitting ? " cursor-not-allowed" : " cursor-pointer",
-                  isDesktop ? "w-full" : "w-40 min-w-[150px] mt-2"
+                  (!isDesktop || isTurboNativeUserAgentState) ? "w-full" : "w-40 min-w-[150px] mt-2"
                 )}
                 type="submit"
               >
@@ -162,14 +181,14 @@ export default function CredentialModal({
         </>
       ) : (
         <>
-          <header className={clsx({ "text-center": !isDesktop })}>
+          <header className={clsx({ "text-center": !isDesktop || isTurboNativeUserAgentState })}>
             <div className="flex flex-col gap-y-2">
               <h4 className={clsx("font-bold leading-none text-black dark:text-white",
-                isDesktop ? "text-xl" : "text-3xl")}>
+                isDesktop && !isTurboNativeUserAgentState ? "text-xl" : "text-3xl")}>
                 Welcome Guest
               </h4>
               <p className={clsx("text-default-500 dark:text-neutral-400",
-                isDesktop ? "text-sm" : "text-lg")}>
+                isDesktop && !isTurboNativeUserAgentState ? "text-sm" : "text-lg")}>
                 Manage Cart, Orders
                 <span aria-label="confetti" className="px-2" role="img">
                   🎉
@@ -179,7 +198,7 @@ export default function CredentialModal({
           </header>
 
           <footer className="flex gap-4">
-            <Link className="w-full" href="/customer/login" onClick={onClose} aria-label="Go to sign in page">
+            <Link className="w-full" href="/customer/login" onClick={finalOnClose} aria-label="Go to sign in page">
               <button
                 className={clsx(
                   "w-full rounded-full bg-blue-600 px-5 py-3 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800",
@@ -194,7 +213,7 @@ export default function CredentialModal({
               </button>
             </Link>
 
-            <Link className="w-full" href="/customer/register" onClick={onClose} aria-label="Go to create account page">
+            <Link className="w-full" href="/customer/register" onClick={finalOnClose} aria-label="Go to create account page">
               <button
                 className={clsx(
                   "w-full rounded-full bg-[#1e293b] px-5 py-3 text-sm font-medium text-white hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700",
@@ -214,12 +233,12 @@ export default function CredentialModal({
     </div>
   );
 
-  if (isDesktop) {
+  if (isDesktop && !isTurboNativeUserAgentState) {
     return (
       <Popover
         backdrop="opaque"
-        isOpen={isOpen}
-        onOpenChange={handleOpenChange}
+        isOpen={finalIsOpen}
+        onOpenChange={finalOnOpenChange}
         defaultOpen={false}
         color="default"
         placement="bottom-end"
@@ -234,7 +253,7 @@ export default function CredentialModal({
           </button>
         </PopoverTrigger>
         <PopoverContent className="min-w-[300px] px-4">
-          {innerContent(() => onOpenChange())}
+          {innerContent(finalOnClose)}
         </PopoverContent>
       </Popover>
     );
@@ -246,46 +265,52 @@ export default function CredentialModal({
         type="button"
         aria-label="Open account"
         className={clsx(className, "cursor-pointer bg-transparent")}
-        onClick={handleOpen}
+        onClick={finalOnOpen}
       >
         {children ? children : <OpenAuth />}
       </button>
 
-      <Drawer
-        backdrop="transparent"
-        hideCloseButton
-        isOpen={isOpen}
-        radius="none"
-        onOpenChange={handleOpenChange}
-        classNames={{
-          base: "z-50",
-          backdrop: "z-40",
-          wrapper: `${isTurboNativeUserAgentState ? 'top-0 bottom-[64px]' : 'top-[68px] bottom-[64px]'}`,
-        }}
-      >
-        <DrawerContent className={`
-                z-50
-                ${isTurboNativeUserAgentState
-            ? "h-[calc(var(--visual-viewport-height)-64px)] max-h-[calc(var(--visual-viewport-height)-64px)]"
-            : "h-[calc(var(--visual-viewport-height)-132px)] max-h-[calc(var(--visual-viewport-height)-132px)]"}
-              `}>
-          {(onClose) => (
-            <>
-              <DrawerHeader className="flex flex-col gap-1 border-b border-neutral-100 dark:border-neutral-800">
+      <AnimatePresence>
+        {finalIsOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={finalOnClose}
+              className={`fixed inset-0 z-40 bg-transparent ${!isTurboNativeUserAgentState ? " lg:hidden" : ""}`}
+              style={{ top: isTurboNativeUserAgentState ? "0" : "68px", bottom: "64px" }}
+            />
+
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300, mass: 0.8 }}
+              className={`fixed right-0 z-50 flex flex-col border-l border-neutral-200 bg-white dark:border-neutral-800 dark:bg-black ${!isTurboNativeUserAgentState ? " lg:hidden" : ""}`}
+              style={{
+                top: isTurboNativeUserAgentState ? "0" : "68px",
+                bottom: "64px",
+                width: "100%",
+                maxWidth: "448px",
+                height: "calc(var(--visual-viewport-height) - 132px)",
+              }}
+            >
+              <div className="flex flex-col gap-1 border-b border-neutral-100 p-4 dark:border-neutral-800">
                 <div className="flex items-center justify-between">
-                  <p className="text-xl font-semibold">Account</p>
+                  <p className="text-xl font-semibold dark:text-white">Account</p>
                 </div>
-              </DrawerHeader>
+              </div>
 
-              <DrawerBody className="flex flex-col justify-center py-0">
-                {innerContent(onClose)}
-              </DrawerBody>
+              <div className="flex flex-1 flex-col justify-center px-4 py-0 drawer-scrollbar-hidden">
+                {innerContent(finalOnClose)}
+              </div>
 
-              <DrawerFooter className="flex flex-col gap-1" />
-            </>
-          )}
-        </DrawerContent>
-      </Drawer>
+              <div className="p-4" />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

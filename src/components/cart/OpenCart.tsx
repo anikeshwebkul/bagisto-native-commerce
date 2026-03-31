@@ -1,5 +1,8 @@
+"use client";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { useEffect, useState } from "react";
+import { isTurboNativeUserAgent, triggerCartCountValue } from "@bagisto-native/core";
 
 export default function OpenCart({
   className,
@@ -8,8 +11,18 @@ export default function OpenCart({
   className?: string;
   quantity?: number | string;
 }) {
+  const [isTurboNativeUserAgentState, setIsTurboNativeUserAgentState] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setMounted(true);
+      setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+      triggerCartCountValue(Number(quantity));
+    });
+  }, [quantity]);
   return (
-    <div className="relative flex  items-center justify-center rounded-md border-0 lg:border border-solid border-neutral-200 text-black dark:border-neutral-700 dark:text-white lg:h-11 lg:w-11">
+    <div className={"relative flex  items-center justify-center rounded-md border-0" + (mounted && !isTurboNativeUserAgentState ? " lg:border border-solid border-neutral-200 dark:border-neutral-700 lg:h-11 lg:w-11" : "")}>
       <ShoppingCartIcon className={clsx("h-5 w-5", className)} />
 
       {quantity ? (
@@ -20,3 +33,4 @@ export default function OpenCart({
     </div>
   );
 }
+

@@ -3,25 +3,49 @@
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { ConfigurableProductIndexData } from "@/types/types";
 import { useAddProduct } from "@utils/hooks/useAddToCart";
 import LoadingDots from "@components/common/icons/LoadingDots";
 import { getVariantInfo } from "@utils/hooks/useVariantInfo";
+import { safeParse } from "@utils/helper";
+import { ProductSwatchReview } from "@/types/category/type";
+
+interface AddToCartFormData {
+  quantity: number;
+  isBuyNow: boolean;
+}
 
 function SubmitButton({
   selectedVariantId,
   pending,
-  type
+  type,
+  isSaleable,
 }: {
   selectedVariantId: boolean;
   pending: boolean;
-  type: string
+  type: string;
+  isSaleable: string;
 }) {
   const buttonClasses =
     "relative flex w-full max-w-[16rem] cursor-pointer h-fit items-center justify-center rounded-full bg-blue-600 p-4 tracking-wide text-white";
   const disabledClasses = "cursor-wait opacity-60";
-  if (!selectedVariantId && ((type === "configurable"))) {
+
+  if (!isSaleable || isSaleable === "") {
+    return (
+      <button
+        aria-disabled
+        aria-label="Out of stock"
+        type="button"
+        disabled
+        className={clsx(buttonClasses, " opacity-60 !cursor-not-allowed")}
+      >
+        Out of Stock
+      </button>
+    );
+  }
+
+  if (!selectedVariantId && type === "configurable") {
     return (
       <button
         aria-disabled
@@ -62,20 +86,24 @@ export function AddToCart({
   productId,
   userInteracted,
 }: {
-  productSwatchReview: any;
+  productSwatchReview: ProductSwatchReview;
   productId: string;
   index: ConfigurableProductIndexData[];
   userInteracted: boolean;
 }) {
+  const isSaleable = productSwatchReview?.isSaleable || "";
   const { onAddToCart, isCartLoading } = useAddProduct();
-  const { handleSubmit, setValue, watch, register } = useForm({
+  const { handleSubmit, setValue, control, register } = useForm<AddToCartFormData>({
     defaultValues: {
       quantity: 1,
       isBuyNow: false,
     },
   });
 
-  const quantity = watch("quantity");
+  const quantity = useWatch({
+    control,
+    name: "quantity",
+  });
 
   const increment = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -90,10 +118,13 @@ export function AddToCart({
   };
 
   const searchParams = useSearchParams();
-  const type = productSwatchReview?.type
+  const type = productSwatchReview?.type;
 
-  const superAttributes =
-    productSwatchReview?.superAttributes?.edges?.map((e: { node: any }) => e.node) || [];
+  const superAttributes = productSwatchReview?.superAttributeOptions
+    ? safeParse(productSwatchReview.superAttributeOptions)
+    : productSwatchReview?.superAttributes?.edges?.map(
+        (e) => e.node,
+      ) || [];
 
   const isConfigurable = superAttributes.length > 0;
 
@@ -101,12 +132,15 @@ export function AddToCart({
     isConfigurable,
     searchParams.toString(),
     superAttributes,
-    JSON.stringify(index)
+    JSON.stringify(index),
   );
   const buttonStatus = !!selectedVariantId;
 
-  const actionWithVariant = async (data: any) => {
-    const pid = type === "configurable" ? String(selectedVariantId) : String(productId).split("/").pop() ?? "";
+  const actionWithVariant = async (data: AddToCartFormData) => {
+    const pid =
+      type === "configurable"
+        ? String(selectedVariantId)
+        : (String(productId).split("/").pop() ?? "");
     onAddToCart({
       productId: pid,
       quantity: data.quantity,
@@ -116,7 +150,7 @@ export function AddToCart({
   return (
     <>
       {!checkStock && type === "configurable" && userInteracted && (
-        <div className="gap-1 px-2 py-1 my-2 font-bold">
+        <div className="gap-1 px-2 py-1 my-2 font-bold text-red-500 dark:text-red-400">
           <h1>NO STOCK AVAILABLE</h1>
         </div>
       )}
@@ -137,7 +171,7 @@ export function AddToCart({
               {...register("quantity", { valueAsNumber: true })}
             />
 
-            <div className="flex h-12 min-w-[3rem] items-center justify-center px-4 font-medium text-gray-800 dark:text-white">
+            <div className="flex h-12 min-w-[4rem] items-center justify-center px-2 font-medium text-gray-800 dark:text-white">
               {quantity}
             </div>
 
@@ -155,6 +189,7 @@ export function AddToCart({
           pending={isCartLoading}
           selectedVariantId={buttonStatus}
           type={type || ""}
+          isSaleable={isSaleable}
         />
       </form>
     </>

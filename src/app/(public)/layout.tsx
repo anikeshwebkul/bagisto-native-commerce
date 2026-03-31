@@ -1,30 +1,28 @@
 import { ReactNode } from "react";
-import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
+import Navbar from "@/components/layout/navbar";
 import { getThemeCustomization } from "@/utils/bagisto";
-import { FACEBOOK_LINK, INSTAGRAM_LINK, TWITTER_LINK } from "@utils/constants";
+import { CategoriesMenu } from "@/components/layout/navbar/CategoriesMenu";
 
 export default async function RootLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const menu = await getThemeCustomization();
+  const menuData = await getThemeCustomization();
   const { COMPANY_NAME, SITE_NAME } = process.env;
-  const copyrightName = COMPANY_NAME || SITE_NAME || "";
-  const socialLinks = {
-    facebook: FACEBOOK_LINK,
-    instagram: INSTAGRAM_LINK,
-    twitter: TWITTER_LINK,
-  };
 
   return (
     <main>
-      <Navbar />
-      <div className="mx-auto min-h-[calc(100vh-580px)] w-full">
+      <Navbar categories={<CategoriesMenu />} />
+      <div className="mx-auto min-h-[calc(100vh-580px)] w-full mb-10">
         {children}
       </div>
-      <Footer menu={menu} copyrightName={copyrightName} socialLinks={socialLinks} />
+      <Footer
+        menu={menuData}
+        companyName={COMPANY_NAME}
+        siteName={SITE_NAME}
+      />
     </main>
   );
 }

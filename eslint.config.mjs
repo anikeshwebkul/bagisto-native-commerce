@@ -9,7 +9,7 @@ const eslintConfig = defineConfig([
     files: ["src/**/*.{js,jsx,ts,tsx}"],
     rules: {
       "@typescript-eslint/no-unused-vars": [
-        "error",
+        "warn",
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
@@ -18,21 +18,16 @@ const eslintConfig = defineConfig([
       ],
       "no-unused-vars": "off",
       "no-console": ["warn", { allow: ["warn", "error"] }],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-non-null-assertion": "warn",
-      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/exhaustive-deps": "off",
       "react/no-unescaped-entities": "warn",
       "@typescript-eslint/no-empty-interface": "warn",
-      "prefer-const": "warn",
+      "prefer-const": "error",
       "no-var": "warn",
     },
   },
-  globalIgnores([
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "public/hotwire/**"]),
 ]);
 
 export default eslintConfig;

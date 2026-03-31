@@ -1,13 +1,14 @@
 "use client";
 
 import { FC, JSX } from "react";
-import DollerIcon from "@components/common/icons/service/DollerIcon";
-import EarphoneIcon from "@components/common/icons/service/EarphoneIcon";
-import ProductIcon from "@components/common/icons/service/ProductIcon";
-import TruckIcon from "@components/common/icons/service/TruckIcon";
 import { OptionDataTypes } from "@/types/types";
 import { ThemeCustomizationTranslationNode } from "@/types/theme/theme-customization";
 import { usePathname } from "next/navigation";
+import { safeParse } from "@utils/helper";
+import VectorIcon from "@components/common/icons/service/VectorIcon";
+import TruckIcon from "@components/common/icons/service/TruckIcon";
+import SofaIcon from "@components/common/icons/service/SofaIcon";
+import AssuranceIcon from "@components/common/icons/service/AssuranceIcon";
 
 export interface ServiceContentDataTypes {
   name?: string;
@@ -21,31 +22,8 @@ export interface ServiceContenRenderTypes {
 }
 
 const ServiceContent: FC<ServiceContentDataTypes> = ({ serviceData }) => {
-  return serviceData?.slice(0, 1)?.map((service, index: number) => {
-    const options =
-      typeof service.options === "string"
-        ? JSON.parse(service.options)
-        : service.options;
-
-    return <ServiceCarouselRender key={index} serviceList={{ options }} />;
-  });
-};
-
-const iconMapping: Record<string, JSX.Element> = {
-  "icon-truck": <TruckIcon />,
-  "icon-product": <ProductIcon />,
-  "icon-dollar-sign": <DollerIcon />,
-  "icon-support": <EarphoneIcon />,
-};
-
-const ServiceCarouselRender: FC<ServiceContenRenderTypes> = ({
-  serviceList,
-}) => {
-  const { options } = serviceList;
-  const { services } = options;
   const pathname = usePathname();
 
-  // Don't render service content on customer auth pages
   if (
     pathname === "/customer/login" ||
     pathname === "/customer/register" ||
@@ -53,6 +31,33 @@ const ServiceCarouselRender: FC<ServiceContenRenderTypes> = ({
   ) {
     return null;
   }
+
+  return (
+    <div className="mx-auto my-16 mt-16 sm:mt-0 w-full lg:my-12 md:my-20 md:max-w-4xl px-4 py-8">
+      {serviceData?.slice(0, 1)?.map((service, index: number) => {
+        const options =
+          typeof service.options === "string"
+            ? safeParse(service.options)
+            : service.options;
+
+        return <ServiceCarouselRender key={index} serviceList={{ options }} />;
+      })}
+    </div>
+  );
+};
+
+const iconMapping: Record<string, JSX.Element> = {
+  "icon-truck": <VectorIcon />,
+  "icon-product": <TruckIcon />,
+  "icon-dollar-sign": <SofaIcon />,
+  "icon-support": <AssuranceIcon />,
+};
+
+const ServiceCarouselRender: FC<ServiceContenRenderTypes> = ({
+  serviceList,
+}) => {
+  const { options } = serviceList;
+  const { services } = options;
 
   return (
     <div className="flex items-center justify-center gap-6 max-lg:flex-wrap max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-8 max-md:text-center md:gap-10 lg:gap-20">

@@ -53,20 +53,20 @@ export default function RegistrationForm() {
   };
 
   return (
-    <div className="my-8 flex w-full items-center w-full max-w-screen-2xl mx-auto px-4 xss:px-7.5 justify-between gap-0 md:gap-4 lg:my-16 xl:my-28">
+    <div className="mt-5 md:my-8 md:mt-0 flex w-full items-center w-full max-w-screen-2xl mx-auto px-4 xss:px-7.5 justify-between gap-0 md:gap-4 lg:my-16 xl:my-28">
       <div className="relative flex w-full max-w-[583px] flex-col gap-y-4 lg:gap-y-12">
         <div className="font-outfit">
           <h2 className="py-1 text-2xl font-semibold sm:text-4xl">
             Become User
           </h2>
-          <p className="mt-2 text-lg font-normal text-black/[60%] dark:text-neutral-300 sm:mt-2">
+          <p className="mt-2 text-base md:text-lg font-normal text-black/[60%] dark:text-neutral-400 sm:mt-2">
             You are new to our store, we are glad to have you as a member.
           </p>
         </div>
 
         <form
           noValidate
-          className="flex flex-col gap-y-8 lg:gap-y-12"
+          className="flex flex-col gap-y-5 lg:gap-y-12"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="flex flex-col gap-y-2.5 lg:gap-[18px]">
@@ -164,15 +164,6 @@ export default function RegistrationForm() {
               {...register("passwordConfirmation", {
                 required: "Please confirm your password",
               })}
-              // errorMsg={
-              //   errors.passwordConfirmation
-              //     ? [errors.passwordConfirmation.message]
-              //     : userErrors?.passwordConfirmation
-              //       ? userErrors.passwordConfirmation
-              //       : userErrors?.password // also show server password errors here
-              //         ? userErrors.password
-              //         : undefined
-              // }
               label="Confirm Password"
               labelPlacement="outside"
               name="passwordConfirmation"
@@ -182,14 +173,14 @@ export default function RegistrationForm() {
             />
           </div>
 
-          <div className="flex flex-col gap-y-3">
+          <div className="flex flex-col gap-y-3 mb-8 lg:mb-0">
             <Button
               disabled={isSubmitting}
               loading={isSubmitting}
               title="Sign Up"
               type="submit"
             />
-            <span className="font-outfit">
+            <span className="mx-auto md:mx-0 font-outfit">
               Already have an account?{" "}
               <Link className="text-blue-600 underline" href="/customer/login" aria-label="Go to sign in page">
                 Sign In

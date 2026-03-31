@@ -9,18 +9,18 @@ export default function OpenAuth({ className }: { className?: string }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-
-    if (!isTurboNativeUserAgent()) {
-      setIsTurboNativeUserAgentState(false);
-    }
+    requestAnimationFrame(() => {
+      setMounted(true);
+      setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    });
   }, []);
   return (
     <>
-      <div className={"relative flex items-center justify-center rounded-md border-0 border-solid border-neutral-200 text-black dark:border-neutral-700 dark:text-white" + (mounted && !isTurboNativeUserAgentState ? "lg:border lg:h-11 lg:w-11" : "")}>
+      <div className={"relative flex items-center justify-center rounded-md border-0" + (mounted && !isTurboNativeUserAgentState ? " lg:border border-solid border-neutral-200 dark:border-neutral-700 lg:h-11 lg:w-11" : "")}>
         <UserIcon className={clsx("h-5 w-5  ", className)} />
       </div>
     </>
 
   );
 }
+

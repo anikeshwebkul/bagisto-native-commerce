@@ -13,10 +13,11 @@ export const ProductMoreDetails: FC<{
   productId: string;
   reviews: any[];
   totalReview: number;
-}> = ({ description, additionalData, reviews, productId, totalReview }) => {
+  expandedKeys: Set<string>;
+  setExpandedKeys: (keys: Set<string>) => void;
+}> = ({ description, additionalData, reviews, productId, totalReview, expandedKeys, setExpandedKeys }) => {
 
-  const filterAdditionalData = additionalData.filter((item) => item?.attribute?.
-    isVisibleOnFront == "1");
+  const filterAdditionalData = additionalData.filter((item) => item?.attribute?.isVisibleOnFront == "1");
 
 
   return (
@@ -29,6 +30,8 @@ export const ProductMoreDetails: FC<{
         selectionMode="multiple"
         showDivider={false}
         variant="splitted"
+        selectedKeys={expandedKeys}
+         onSelectionChange={(keys) => setExpandedKeys(keys as Set<string>)}
       >
         <AccordionItem
           key="1"
@@ -46,7 +49,7 @@ export const ProductMoreDetails: FC<{
           aria-label="Description"
           title="Description"
         >
-          <Prose className="pb-2" html={description} />
+          <Prose className="pb-2 text-selected-black dark:text-white font-light" html={description} />
         </AccordionItem>
 
         {filterAdditionalData.length > 0
@@ -71,12 +74,12 @@ export const ProductMoreDetails: FC<{
               {filterAdditionalData?.map((item) => (
                 <React.Fragment key={item.label}>
                   <div className="grid">
-                    <p className="text-base font-normal text-black/60 dark:text-white">
+                    <p className="text-base font-normal text-selected-black dark:text-white">
                       {item?.attribute?.adminName}
                     </p>
                   </div>
                   <div className="grid">
-                    <p className="text-base font-normal text-black/60 dark:text-white">
+                    <p className="text-base font-normal text-selected-black dark:text-white">
                       {item?.value || "--"}
                     </p>
                   </div>
@@ -104,14 +107,14 @@ export const ProductMoreDetails: FC<{
         >
           {totalReview > 0 ? (
             <>
-              <ReviewSection productId={productId} />
               <ReviewDetail
                 reviewDetails={reviews}
                 totalReview={totalReview}
+                productId={productId}
               />
             </>
           ) : (
-            <ReviewSection productId={productId} />
+            <ReviewSection productId={productId}  totalReview={totalReview} />
           )}
         </AccordionItem>
       </Accordion>

@@ -3,8 +3,8 @@ import { generateMetadataForPage } from "@utils/helper";
 import { staticSeo } from "@utils/metadata";
 import { Suspense } from "react";
 import ForgetSkeleton from "@components/common/skeleton/ForgetSkeleton";
-import HotwireAppDynamicButtonComponent from "@components/hotwire/components/HotwireAppDynamicButtonComponent";
 const ForgetPasswordForm = dynamic(() => import("@components/customer/ForgetPassword"));
+import HotwireAppDynamicButtonComponent from "@components/hotwire/components/HotwireAppDynamicButtonComponent";
 
 export const revalidate = 3600;
 export async function generateMetadata() {

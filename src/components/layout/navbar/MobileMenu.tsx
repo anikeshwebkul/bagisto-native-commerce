@@ -1,14 +1,10 @@
 "use client";
 
-import {
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-} from "@heroui/drawer";
-import { useDisclosure } from "@heroui/react";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import BottomNavbar from "./BottomNavbar";
 import { MobileSearchBar } from "./MobileSearch";
+import { useBodyScrollLock } from "@utils/hooks/useBodyScrollLock";
 import { useState, useEffect } from "react";
 import { isTurboNativeUserAgent } from "@bagisto-native/core";
 import ThemeSwitcherWrapper from "@components/theme/theme-switch";
@@ -16,74 +12,88 @@ import { ActiveTabType } from "./type";
 import { useModalDismiss } from "@components/hotwire/hooks/useModalDismiss";
 
 export default function MobileMenu({ menu }: { menu: any }) {
-  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const [activeTab, setActiveTab] = useState<
     ActiveTabType
   >(null);
 
   const [isTurboNativeUserAgentState, setIsTurboNativeUserAgentState] = useState(false);
 
+  const isOpen = activeTab === "category";
+
+  useBodyScrollLock(isOpen);
+
   useEffect(() => {
-    setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    requestAnimationFrame(() => {
+      setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    });
   }, []);
+
+  const handleClose = () => {
+    setActiveTab(null);
+  };
 
   // Handle modal dismiss for Turbo Native
   useModalDismiss({
     activeTab,
-    onClose,
+    onClose: handleClose,
     setActiveTab,
   });
 
   return (
     <>
       <BottomNavbar
-        onMenuOpen={onOpen}
+        onMenuOpen={() => setActiveTab("category")}
         setActiveTab={setActiveTab}
-        activeTab={activeTab} />
+        activeTab={activeTab}
+      />
 
-      <Drawer
-        backdrop="transparent"
-        hideCloseButton
-        isOpen={isOpen}
-        radius="none"
-        placement="left"
-        onOpenChange={(open) => {
-          onOpenChange();
-          if (!open) {
-            setActiveTab(null);
-          }
-        }}
-        classNames={{
-          base: "z-50",
-          backdrop: "z-40",
-          wrapper: `${isTurboNativeUserAgentState ? 'top-0 bottom-[64px]' : 'top-[68px] bottom-[64px]'}`,
-        }}
-      >
-        <DrawerContent
-          className={`
-                z-50
-                ${isTurboNativeUserAgentState
-              ? "h-[calc(var(--visual-viewport-height)-64px)] max-h-[calc(var(--visual-viewport-height)-64px)]"
-              : "h-[calc(var(--visual-viewport-height)-132px)] max-h-[calc(var(--visual-viewport-height)-132px)]"}
-              `}
-        >
-          {(onClose) => (
-            <>
-              <DrawerBody className="px-4 py-4 overflow-y-auto">
-                {!isTurboNativeUserAgentState && <MobileSearchBar onClose={onClose} />}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleClose}
+              className={`fixed inset-0 z-40 bg-transparent ${!isTurboNativeUserAgentState ? " lg:hidden" : ""}`}
+              style={{ top: isTurboNativeUserAgentState ? "0" : "68px", bottom: "64px" }}
+            />
+
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className={`fixed left-0 z-50 w-full max-w-[448px] border-r border-neutral-200 bg-white dark:border-neutral-800 dark:bg-black drawer-scrollbar-hidden ${!isTurboNativeUserAgentState ? " lg:hidden" : ""}`}
+              style={{
+                top: isTurboNativeUserAgentState ? "0" : "68px",
+                bottom: "64px",
+                width: "100%",
+                maxWidth: "448px",
+                height: "calc(var(--visual-viewport-height) - 132px)",
+              }}
+            >
+              <div className="h-full overflow-y-auto px-4 py-4 drawer-scrollbar-hidden">
+                {!isTurboNativeUserAgentState && <MobileSearchBar onClose={handleClose} />}
+
                 {
                   isTurboNativeUserAgentState ? (
                     <div className="flex items-center justify-between">
-                      <h1 className="text-2xl text-black dark:text-white px-2 font-semibold"> Category </h1>
+                      <h1 className="mt-4 px-2 text-2xl font-semibold text-black dark:text-white">
+                        Category
+                      </h1>
                       <div className="flex">
                         <ThemeSwitcherWrapper />
                       </div>
                     </div>
                   ) : (
-                    <h1 className="text-2xl text-black dark:text-white px-2 font-semibold"> Category </h1>
+                    <h1 className="mt-4 px-2 text-2xl font-semibold text-black dark:text-white">
+                      Category
+                    </h1>
                   )
                 }
-                <ul className="flex w-full flex-col">
+
+                <ul className="mt-2 flex w-full flex-col drawer-scrollbar-hidden">
                   {menu.map((item: any) => (
                     <li
                       key={item.id + item.name}
@@ -92,18 +102,18 @@ export default function MobileMenu({ menu }: { menu: any }) {
                       <Link
                         href={item.slug ? `/search/${item.slug}` : "/search"}
                         aria-label={`${item?.name}`}
-                        onClick={onClose}
+                        onClick={handleClose}
                       >
                         {item.name}
                       </Link>
                     </li>
                   ))}
                 </ul>
-              </DrawerBody>
-            </>
-          )}
-        </DrawerContent>
-      </Drawer>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

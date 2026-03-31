@@ -8,6 +8,8 @@ export interface CheckoutAddressConnection {
   edges: CheckoutAddressEdge[];
 }
 
+
+
 export interface CheckoutAddressEdge {
   node: CheckoutAddressNode;
 }
@@ -42,7 +44,6 @@ export interface MappedCheckoutAddress {
   phone: string;
 }
 
-
 export interface CheckoutShippingMethodResult {
   success: boolean;
   id: string | null;
@@ -59,29 +60,26 @@ export interface CreateCheckoutShippingMethodData {
 
 export interface CreateCheckoutShippingMethodOperation {
   data: CreateCheckoutShippingMethodData;
+  variables: CreateCheckoutShippingMethodVariables;
 }
 
 export interface CreateCheckoutShippingMethodVariables {
-  token: string;
   shippingMethod: string;
+}
+
+export interface SelectedPaymentType {
+  method: string;
+  methodTitle?: string;
+}
+
+export interface SelectedShippingRateType {
+  method: string;
+  methodDescription?: string;
 }
 
 
 
- export interface SelectedPaymentType {
-    method: string;
-    methodTitle?: string;
-  };
-
-
-  export interface SelectedShippingRateType {
-    method: string;
-    methodDescription?: string;
-  };
-
-
-
-  // Checkout Payment Methods
+// Checkout Payment Methods
 
 export interface CheckoutPaymentMethod {
   id: string;
@@ -96,14 +94,61 @@ export interface CheckoutPaymentMethod {
 export interface CheckoutPaymentMethodsData {
   collectionPaymentMethods: CheckoutPaymentMethod[];
 }
-export interface CheckoutPaymentMethodsVariables {
-  token: string;
-}
 export interface CheckoutPaymentMethodsOperation {
+  variables: Record<string, unknown>;
   data: CheckoutPaymentMethodsData;
-  variables: CheckoutPaymentMethodsVariables;
 }
 
+// checkout save payment
+
+export interface CreateCheckoutPaymentMethodVariables {
+  paymentMethod: string;
+  successUrl?: string | null;
+  failureUrl?: string | null;
+  cancelUrl?: string | null;
+}
+
+export interface CheckoutPaymentMethod {
+  success: boolean;
+  message: string;
+  paymentGatewayUrl: string | null;
+  paymentData: unknown;
+}
+
+export interface CreateCheckoutPaymentMethodResponse {
+  createCheckoutPaymentMethod: {
+    checkoutPaymentMethod: CheckoutPaymentMethod;
+  };
+}
+
+export interface CreateCheckoutPaymentMethodOperation {
+  data: CreateCheckoutPaymentMethodResponse;
+  variables: CreateCheckoutPaymentMethodVariables;
+}
+
+// Checkout Shipping Rates
+
+export interface CheckoutShippingRate {
+  id: string;
+  code: string;
+  description: string | null;
+  method: string;
+  price: number;
+  label: string;
+}
+
+export interface GetCheckoutShippingRatesData {
+  collectionShippingRates: CheckoutShippingRate[];
+}
+
+export interface GetCheckoutShippingRatesVariables {
+  token: string;
+}
+
+export interface GetCheckoutShippingRatesOperation {
+  data: GetCheckoutShippingRatesData;
+  variables: GetCheckoutShippingRatesVariables;
+}
 
 // Checkout Place Order
 
@@ -117,13 +162,8 @@ export interface CreateCheckoutOrderPayload {
 export interface CreateCheckoutOrderData {
   createCheckoutOrder: CreateCheckoutOrderPayload;
 }
-export interface CreateCheckoutOrderVariables {
-  token: string;
-}
-
 export interface CreateCheckoutOrderOperation {
   data: CreateCheckoutOrderData;
-  variables: CreateCheckoutOrderVariables;
 }
 
 // Checkout Get Address
@@ -144,19 +184,14 @@ export interface CheckoutAddress {
   useForShipping: boolean;
 }
 
-
 export interface CheckoutAddressesConnection {
   edges: CheckoutAddressEdge[];
 }
 export interface GetCheckoutAddressesData {
   collectionGetCheckoutAddresses: CheckoutAddressesConnection;
 }
-export interface GetCheckoutAddressesVariables {
-  token: string;
-}
 export interface GetCheckoutAddressesOperation {
   data: GetCheckoutAddressesData;
-  variables: GetCheckoutAddressesVariables;
 }
 
 // checkout save address
@@ -188,8 +223,6 @@ export interface CreateCheckoutAddressData {
   createCheckoutAddress: CreateCheckoutAddressPayload;
 }
 export interface CreateCheckoutAddressVariables {
-  token: string;
-
   // Billing
   billingFirstName: string;
   billingLastName: string;
@@ -221,6 +254,5 @@ export interface CreateCheckoutAddressOperation {
   data: CreateCheckoutAddressData;
   variables: CreateCheckoutAddressVariables;
 }
-
 
 // checkout save payment

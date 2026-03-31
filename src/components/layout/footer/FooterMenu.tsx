@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ThemeOptions } from "@/types/types";
 import { isArray } from "@/utils/type-guards";
+import { safeParse } from "@/utils/helper";
 
 const getUrlparams = (url: string) => {
   const splitUrl = url.split("/");
@@ -18,11 +19,11 @@ const getUrlparams = (url: string) => {
 
 const FooterMenuItem = ({ item }: { item: ThemeOptions }) => {
   return (
-    <li>
+    <li className="text-selected-black dark:text-neutral-300">
       <Link
         aria-label={`${item?.title}`}
         title={`${item?.title}`}
-        className="block px-0 py-1 md:p-2 text-nowrap text-sm underline-offset-4 hover:text-black hover:underline md:inline-block dark:hover:text-neutral-300"
+        className="block px-0 py-1 md:p-2 text-nowrap text-sm underline-offset-4 text-selected-black dark:text-neutral-300 hover:text-black hover:underline md:inline-block dark:hover:text-neutral-300"
         href={getUrlparams(item.url)}
       >
         {item.title}
@@ -41,7 +42,7 @@ export default function FooterMenu({
   const firstMenu = menu[0]?.node;
   const firstTranslation = firstMenu?.translations?.edges?.[0]?.node;
   const channels = typeof firstTranslation?.options === 'string'
-    ? JSON.parse(firstTranslation.options)
+    ? safeParse(firstTranslation.options)
     : firstTranslation?.options;
 
   return (

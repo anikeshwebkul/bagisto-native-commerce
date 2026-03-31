@@ -1,4 +1,18 @@
 import { SVGProps } from "react";
+import { Session } from "next-auth";
+
+
+export interface BagistoSession extends Session {
+  user: {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+    accessToken?: string;
+    apiToken?: string;
+    role?: string;
+  };
+}
 
 export type Maybe<T> = T | null;
 
@@ -476,8 +490,9 @@ export type ConfigurableProductData = {
 
 export type AttributeOptionNode = {
   id: string;
-  adminName: string;
-  isValid : boolean
+  adminName?: string;
+  label?: string;
+  isValid: boolean;
 };
 
 export type AttributeOptionEdge = {
@@ -487,7 +502,8 @@ export type AttributeOptionEdge = {
 export type AttributeData = {
   id: string;
   code: string;
-  options: {
+  label?: string;
+  options: AttributeOptionNode[] | {
     edges: AttributeOptionEdge[];
   };
 };

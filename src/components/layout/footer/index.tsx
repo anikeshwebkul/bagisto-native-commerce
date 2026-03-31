@@ -10,37 +10,62 @@ import TwitterIcon from "@components/common/icons/social-icon/TwitterIcon";
 import Subscribe from "./Subscribe";
 import FooterMenu from "./FooterMenu";
 import ServiceContent from "./ServiceContent";
-import { ThemeCustomizationTranslationEdge, ThemeCustomizationResult } from "@/types/theme/theme-customization";
-import { FACEBOOK_LINK, INSTAGRAM_LINK, TWITTER_LINK } from "@utils/constants";
+import { ThemeCustomizationResult, ThemeCustomizationTranslationEdge } from "@/types/theme/theme-customization";
 import { isTurboNativeUserAgent } from "@bagisto-native/core";
 
-export default function Footer({ menu, copyrightName, socialLinks }: { menu: ThemeCustomizationResult, copyrightName: string, socialLinks?: { facebook?: string, instagram?: string, twitter?: string } }) {
-  const [mounted, setMounted] = useState(false);
+export default function Footer({
+  menu,
+  companyName,
+  siteName,
+}: {
+  menu: ThemeCustomizationResult;
+  companyName?: string;
+  siteName?: string;
+}) {
   const [isTurboNativeUserAgentState, setIsTurboNativeUserAgentState] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    requestAnimationFrame(() => {
+      setMounted(true);
+      setIsTurboNativeUserAgentState(isTurboNativeUserAgent());
+    });
   }, []);
 
   const currentYear = new Date().getFullYear();
   const copyrightDate = 2010 + (currentYear > 2010 ? `-${currentYear}` : "");
   const skeleton =
     "w-full h-6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700";
+  const copyrightName = companyName || siteName || "";
+  const services =
+    menu?.services_content?.themeCustomizations?.edges?.[0]?.node;
 
-  const services = menu?.services_content?.themeCustomizations?.edges?.[0]?.node;
-
-  return (
-    <>
-      <div className={`mx-auto my-16 mt-16 sm:mt-0 w-full lg:my-12 md:my-20 md:max-w-4xl ${mounted && isTurboNativeUserAgentState ? 'md:!mb-[80px] lg:mb-[80px]' : ''}`}>
+  if (mounted && isTurboNativeUserAgentState) {
+    return (
+      <>
         {isObject(services) && services?.translations?.edges && (
           <ServiceContent
             name={services?.name}
-            serviceData={services?.translations?.edges?.map((edge: ThemeCustomizationTranslationEdge) => edge.node)}
+            serviceData={services?.translations?.edges?.map(
+              (edge: ThemeCustomizationTranslationEdge) => edge.node,
+            )}
           />
         )}
-      </div>
-      <footer className={`hidden lg:block border-t border-neutral-200 text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400 ${mounted && isTurboNativeUserAgentState ? 'lg:hidden' : ''} `}>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {isObject(services) && services?.translations?.edges && (
+        <ServiceContent
+          name={services?.name}
+          serviceData={services?.translations?.edges?.map(
+            (edge: ThemeCustomizationTranslationEdge) => edge.node,
+          )}
+        />
+      )}
+      <footer className="hidden lg:block border-t border-neutral-200 text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
         <div className="mx-auto flex w-full max-w-screen-2xl flex-col justify-between gap-6 gap-y-6 px-6 py-12 text-sm dark:border-neutral-700 min-[880px]:flex-row min-[880px]:gap-12 min-[880px]:gap-y-20 min-[880px]:px-4">
           <div className="flex flex-col gap-[14px]">
             <Link
@@ -54,29 +79,32 @@ export default function Footer({ menu, copyrightName, socialLinks }: { menu: The
             </Link>
             <div className="flex gap-[14px]">
               <Link
-                href={socialLinks?.facebook || FACEBOOK_LINK}
+                href={"#"}
                 aria-label="Visit Bagisto Store on Facebook"
                 title="Facebook"
                 target="_blank"
-                className="cursor-pointer">
+                className="cursor-pointer"
+              >
                 <FaceBookIcon />
                 <span className="sr-only">Facebook</span>
               </Link>
               <Link
-                href={socialLinks?.instagram || INSTAGRAM_LINK}
+                href={"#"}
                 aria-label="Visit Bagisto Store on Instagram"
                 title="Instagram"
                 target="_blank"
-                className="cursor-pointer">
+                className="cursor-pointer"
+              >
                 <InstaGramIcon />
                 <span className="sr-only">Instagram</span>
               </Link>
               <Link
-                href={socialLinks?.twitter || TWITTER_LINK}
+                href={"#"}
                 aria-label="Visit Bagisto Store on Twitter"
                 title="Twitter"
                 target="_blank"
-                className="cursor-pointer">
+                className="cursor-pointer"
+              >
                 <TwitterIcon />
                 <span className="sr-only">Twitter</span>
               </Link>
@@ -94,7 +122,9 @@ export default function Footer({ menu, copyrightName, socialLinks }: { menu: The
                 </div>
               }
             >
-              <FooterMenu menu={menu?.footer_links?.themeCustomizations?.edges as any} />
+              <FooterMenu
+                menu={menu?.footer_links?.themeCustomizations?.edges}
+              />
             </Suspense>
             <Subscribe />
           </div>

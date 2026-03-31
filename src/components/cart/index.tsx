@@ -3,26 +3,20 @@ import CartModal from "./CartModal";
 export default function Cart({
   children,
   className,
-  onClick,
+  onOpen,
   onClose,
   isBottomNavbar,
   isOpen,
 }: {
   children?: React.ReactNode;
   className?: string;
-  onClick?: () => void;
+  onOpen?: () => void;
   onClose?: () => void;
   isBottomNavbar?: boolean;
   isOpen?: boolean;
 }) {
   return (
-    <CartModal
-      className={className}
-      isBottomNavbar={isBottomNavbar}
-      onClick={onClick}
-      onClose={onClose}
-      isOpen={isOpen}
-    >
+    <CartModal className={className} isBottomNavbar={isBottomNavbar} onOpen={onOpen} onClose={onClose} isOpen={isOpen}>
       {children}
     </CartModal>
   );

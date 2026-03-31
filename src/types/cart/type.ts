@@ -18,6 +18,11 @@ export interface CartItemEdge {
   node: CartItem;
 }
 
+// Cart Item Edge for Modal (same structure as CartItemEdge)
+export interface CartItemEdgeForModal {
+  node: CartItem;
+}
+
 // Items connection
 export interface CartItemsConnection {
   edges: CartItemEdge[];
@@ -49,19 +54,12 @@ export interface GetCartItemData {
   createReadCart: CreateReadCart;
 }
 
-export interface GetCartItemVariables {
-  token: string;
-}
-
-// Full GraphQL operation shape (commonly used with bagistoFetch)
 export interface ReadCartOperation {
   data: GetCartItemData;
-  variables: GetCartItemVariables;
 }
 
-
- // Add Product In Cart
- export interface AddToCartItem {
+// Add Product In Cart
+export interface AddToCartItem {
   id: string;
   cartId: string;
   productId: string;
@@ -99,7 +97,6 @@ export interface AddProductInCart {
   items: AddToCartItemsConnection;
 }
 
-
 export interface CreateAddProductInCart {
   addProductInCart: AddProductInCart;
 }
@@ -109,7 +106,6 @@ export interface AddToCartData {
 }
 
 export interface AddToCartVariables {
-  token?: string | null;
   cartId?: number | null;
   productId: number;
   quantity: number;
@@ -120,7 +116,7 @@ export interface AddToCartOperation {
   variables: AddToCartVariables;
 }
 
-// Guest Cart Token 
+// Guest Cart Token
 export interface CartToken {
   id: string;
   cartToken: string;
@@ -140,12 +136,10 @@ export interface CreateCartTokenData {
 }
 export type CreateCartTokenVariables = void;
 
-
 export interface CreateCartTokenOperation {
   data: CreateCartTokenData;
   variables: CreateCartTokenVariables;
 }
-
 
 // Merge Cart
 
@@ -184,14 +178,12 @@ export interface CreateMergeCartData {
   createMergeCart: CreateMergeCartPayload;
 }
 export interface CreateMergeCartVariables {
-  token: string;
   cartId: number;
 }
 export interface CreateMergeCartOperation {
   data: CreateMergeCartData;
   variables: CreateMergeCartVariables;
 }
-
 
 // Remove Cart Item
 export interface RemoveCartItemNode {
@@ -237,7 +229,6 @@ export interface RemoveCartItemData {
 }
 
 export interface RemoveCartItemVariables {
-  token: string;
   cartItemId: number;
 }
 
@@ -245,7 +236,6 @@ export interface RemoveCartItemOperation {
   data: RemoveCartItemData;
   variables: RemoveCartItemVariables;
 }
-
 
 // Update Cart Item
 export interface UpdateCartItemNode {
@@ -285,7 +275,6 @@ export interface UpdateCartItemData {
   createUpdateCartItem: CreateUpdateCartItemPayload;
 }
 export interface UpdateCartItemVariables {
-  token: string;
   cartItemId: number;
   quantity: number;
 }

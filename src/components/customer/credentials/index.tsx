@@ -3,18 +3,18 @@ import CredentialModal from "./CredentialModal";
 export default function UserAccount({
   children,
   className,
-  onClick,
+  onOpen,
   onClose,
   isOpen,
 }: {
   children?: React.ReactNode;
   className?: string;
-  onClick?: () => void;
+  onOpen?: () => void;
   onClose?: () => void;
   isOpen?: boolean;
 }) {
   return (
-    <CredentialModal className={className} onClick={onClick} onClose={onClose} isOpen={isOpen}>
+    <CredentialModal className={className} onOpen={onOpen} onClose={onClose} isOpen={isOpen}>
       {children}
     </CredentialModal>
   );
